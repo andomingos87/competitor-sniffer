@@ -81,8 +81,8 @@ export const CompetitorDialog = () => {
 
       if (error) throw error;
 
-      if (competitor.youtube_id) {
-        await notifyWebhook(competitor.youtube_id);
+      if (competitor) {
+        await notifyWebhook(competitor.youtube_id || '');
       }
 
       toast({
@@ -95,7 +95,9 @@ export const CompetitorDialog = () => {
       setOpen(false);
       
       // Navigate to the competitor's page
-      navigate(`/competitors/${competitor.id}`);
+      if (competitor) {
+        navigate(`/competitors/${competitor.id}`);
+      }
     } catch (error) {
       console.error('Error adding competitor:', error);
       toast({
