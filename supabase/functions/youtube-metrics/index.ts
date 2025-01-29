@@ -1,38 +1,52 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 // Definição dos cabeçalhos CORS
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': '*', // Restrinja conforme necessário
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS', // Adicionado para especificar métodos permitidos
-}
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 // Exporta a função padrão para a Edge Function
 export default async (req) => {
   // Trata requisições de preflight CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verifica se as variáveis de ambiente estão definidas
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing required environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Internal server error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Inicializa o cliente Supabase
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    // Analisa o corpo da requisição
-    const { youtube_id } = await req.json()
+    // Valida o corpo da requisição
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    const { youtube_id } = body;
     if (!youtube_id) {
-      console.error('No youtube_id provided')
+      console.error('No youtube_id provided');
       return new Response(
         JSON.stringify({ error: 'youtube_id is required' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Obtém competitor_id a partir do youtube_id
@@ -40,17 +54,14 @@ export default async (req) => {
       .from('competitors')
       .select('id')
       .eq('youtube_id', youtube_id)
-      .single()
+      .single();
 
     if (competitorError || !competitor) {
-      console.error('Error getting competitor:', competitorError)
+      console.error('Error getting competitor:', competitorError?.message || competitorError);
       return new Response(
-        JSON.stringify({ error: 'Competitor not found' }),
-        { 
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+        JSON.stringify({ error: 'Competitor not found', details: competitorError }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Insere métricas no banco de dados
@@ -59,37 +70,55 @@ export default async (req) => {
       .insert({
         competitor_id: competitor.id,
         subscribers: 0, // Será atualizado pelo webhook
-        views: 0,        // Será atualizado pelo webhook
-        videos: 0        // Será atualizado pelo webhook
-      })
+        views: 0,       // Será atualizado pelo webhook
+        videos: 0       // Será atualizado pelo webhook
+      });
 
     if (metricsError) {
-      console.error('Error inserting metrics:', metricsError)
+      console.error('Error inserting metrics:', metricsError?.message || metricsError);
       return new Response(
-        JSON.stringify({ error: 'Failed to insert metrics' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+        JSON.stringify({ error: 'Failed to insert metrics', details: metricsError }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    return new Response(
-      JSON.stringify({ message: 'Metrics initialized successfully' }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    // Chama o endpoint externo
+    try {
+      const externalResponse = await fetch('https://n8n-production-ff75.up.railway.app/webhook-test/concorrente-youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtube_id }),
+        signal: AbortSignal.timeout(5000), // Timeout de 5 segundos
+      });
 
-  } catch (error) {
-    console.error('Error processing request:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      if (!externalResponse.ok) {
+        console.error('External API call failed:', externalResponse.statusText);
+        return new Response(
+          JSON.stringify({ error: 'Failed to call external API', details: externalResponse.statusText }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    )
+
+      const externalData = await externalResponse.json();
+      console.log('External API response:', externalData);
+    } catch (externalError) {
+      console.error('Error calling external API:', externalError?.message || externalError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to call external API', details: externalError?.message || externalError }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Retorna uma resposta de sucesso
+    return new Response(
+      JSON.stringify({ message: 'Metrics initialized successfully and external API called' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error processing request:', error?.message || error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: error?.message || error }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-}
+};
