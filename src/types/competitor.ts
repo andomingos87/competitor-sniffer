@@ -1,11 +1,9 @@
 export interface Competitor {
-  id: string;
-  name: string;
-  website: string;
-  metrics: {
-    posts: number;
-    engagement: number;
-    followers: number;
-    lastUpdated: string;
-  };
+  id: number;
+  name: string | null;
+  website: string | null;
+  youtube: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  created_at: string | null;
 }

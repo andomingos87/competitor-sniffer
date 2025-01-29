@@ -1,5 +1,6 @@
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -11,33 +12,8 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CompetitorDialog } from "@/components/CompetitorDialog";
+import { supabase } from "@/integrations/supabase/client";
 import type { Competitor } from "@/types/competitor";
-
-// Dados mockados para exemplo
-const mockCompetitors: Competitor[] = [
-  {
-    id: "1",
-    name: "Empresa A",
-    website: "www.empresaa.com",
-    metrics: {
-      posts: 150,
-      engagement: 25,
-      followers: 10000,
-      lastUpdated: "2024-02-20",
-    },
-  },
-  {
-    id: "2",
-    name: "Empresa B",
-    website: "www.empresab.com",
-    metrics: {
-      posts: 200,
-      engagement: 30,
-      followers: 15000,
-      lastUpdated: "2024-02-20",
-    },
-  },
-];
 
 const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onClick: () => void }) => (
   <Card 
@@ -52,22 +28,22 @@ const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onCli
         <p className="text-sm text-gray-500">{competitor.website}</p>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-primary-100 p-3 rounded-lg">
-            <p className="text-sm font-medium text-primary-700">Posts</p>
-            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.posts}</p>
+            <p className="text-sm font-medium text-primary-700">YouTube</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.youtube || 'N/A'}</p>
           </div>
           <div className="bg-primary-100 p-3 rounded-lg">
-            <p className="text-sm font-medium text-primary-700">Engajamento</p>
-            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.engagement}%</p>
+            <p className="text-sm font-medium text-primary-700">Instagram</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.instagram || 'N/A'}</p>
           </div>
           <div className="bg-primary-100 p-3 rounded-lg">
-            <p className="text-sm font-medium text-primary-700">Seguidores</p>
+            <p className="text-sm font-medium text-primary-700">Facebook</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.facebook || 'N/A'}</p>
+          </div>
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <p className="text-sm font-medium text-primary-700">Data de Cadastro</p>
             <p className="text-lg font-semibold text-primary-900">
-              {competitor.metrics.followers.toLocaleString()}
+              {new Date(competitor.created_at || '').toLocaleDateString()}
             </p>
-          </div>
-          <div className="bg-primary-100 p-3 rounded-lg">
-            <p className="text-sm font-medium text-primary-700">Última Atualização</p>
-            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.lastUpdated}</p>
           </div>
         </div>
       </div>
@@ -79,9 +55,34 @@ const Competitors = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const handleCompetitorClick = (id: string) => {
+  const { data: competitors, isLoading } = useQuery({
+    queryKey: ['competitors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('competitors')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching competitors:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+  });
+
+  const handleCompetitorClick = (id: number) => {
     navigate(`/competitors/${id}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -102,9 +103,13 @@ const Competitors = () => {
           <CardTitle className="text-primary-800">Lista de Concorrentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {isMobile ? (
+          {competitors && competitors.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              Nenhum concorrente cadastrado ainda. Use o botão "Adicionar Concorrente" para começar.
+            </div>
+          ) : isMobile ? (
             <div className="grid gap-4">
-              {mockCompetitors.map((competitor) => (
+              {competitors?.map((competitor) => (
                 <CompetitorCard
                   key={competitor.id}
                   competitor={competitor}
@@ -118,15 +123,15 @@ const Competitors = () => {
                 <TableRow className="bg-primary-50">
                   <TableHead className="text-primary-900">Nome</TableHead>
                   <TableHead className="text-primary-900">Website</TableHead>
-                  <TableHead className="text-primary-900">Posts</TableHead>
-                  <TableHead className="text-primary-900">Engajamento</TableHead>
-                  <TableHead className="text-primary-900">Seguidores</TableHead>
-                  <TableHead className="text-primary-900">Última Atualização</TableHead>
+                  <TableHead className="text-primary-900">YouTube</TableHead>
+                  <TableHead className="text-primary-900">Instagram</TableHead>
+                  <TableHead className="text-primary-900">Facebook</TableHead>
+                  <TableHead className="text-primary-900">Data de Cadastro</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockCompetitors.map((competitor) => (
+                {competitors?.map((competitor) => (
                   <TableRow
                     key={competitor.id}
                     className="cursor-pointer hover:bg-primary-50 transition-colors"
@@ -136,12 +141,12 @@ const Competitors = () => {
                       {competitor.name}
                     </TableCell>
                     <TableCell>{competitor.website}</TableCell>
-                    <TableCell className="font-medium">{competitor.metrics.posts}</TableCell>
-                    <TableCell className="font-medium">{competitor.metrics.engagement}%</TableCell>
-                    <TableCell className="font-medium">
-                      {competitor.metrics.followers.toLocaleString()}
+                    <TableCell>{competitor.youtube || 'N/A'}</TableCell>
+                    <TableCell>{competitor.instagram || 'N/A'}</TableCell>
+                    <TableCell>{competitor.facebook || 'N/A'}</TableCell>
+                    <TableCell>
+                      {new Date(competitor.created_at || '').toLocaleDateString()}
                     </TableCell>
-                    <TableCell>{competitor.metrics.lastUpdated}</TableCell>
                     <TableCell>
                       <ArrowRight className="h-4 w-4 text-primary-600" />
                     </TableCell>
