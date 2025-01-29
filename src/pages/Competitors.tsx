@@ -18,6 +18,17 @@ import type { Competitor } from "@/types/competitor";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const CompetitorCard = ({ 
   competitor, 
@@ -176,14 +187,31 @@ const Competitors = () => {
         </div>
         <div className="flex gap-2">
           {selectedIds.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleDeleteSelected}
-              className="whitespace-nowrap"
-            >
-              <Trash2 className="h-4 w-4" />
-              Deletar ({selectedIds.length})
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="whitespace-nowrap"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Deletar ({selectedIds.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir {selectedIds.length} concorrente(s)? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteSelected}>
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <CompetitorDialog />
         </div>

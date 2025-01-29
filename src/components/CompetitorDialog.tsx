@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ export const CompetitorDialog = () => {
   const { register, handleSubmit, reset } = useForm<CompetitorFormData>();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const notifyWebhook = async (youtube_id: string) => {
     try {
@@ -75,6 +77,9 @@ export const CompetitorDialog = () => {
       queryClient.invalidateQueries({ queryKey: ['competitors'] });
       reset();
       setOpen(false);
+      
+      // Navegar para a página do concorrente criado
+      navigate(`/competitors/${competitor.id}`);
     } catch (error) {
       console.error('Error adding competitor:', error);
       toast({
