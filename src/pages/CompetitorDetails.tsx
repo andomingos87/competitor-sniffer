@@ -84,12 +84,21 @@ const CompetitorDetails = () => {
     if (!competitorId) return;
 
     try {
-      const { error } = await supabase
+      // Primeiro, deletamos todas as métricas associadas
+      const { error: metricsError } = await supabase
+        .from('competitor_metrics')
+        .delete()
+        .eq('competitor_id', competitorId);
+
+      if (metricsError) throw metricsError;
+
+      // Depois, deletamos o concorrente
+      const { error: competitorError } = await supabase
         .from('competitors')
         .delete()
         .eq('id', competitorId);
 
-      if (error) throw error;
+      if (competitorError) throw competitorError;
 
       toast({
         title: "Sucesso",
