@@ -1,15 +1,28 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { EditCompetitorDialog } from "@/components/EditCompetitorDialog";
+import { useToast } from "@/hooks/use-toast";
 import type { Competitor } from "@/types/competitor";
 
 const CompetitorDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const competitorId = id ? parseInt(id) : null;
 
   const { data: competitor, isLoading, refetch } = useQuery({
@@ -32,6 +45,33 @@ const CompetitorDetails = () => {
     },
     enabled: !!competitorId,
   });
+
+  const handleDelete = async () => {
+    if (!competitorId) return;
+
+    try {
+      const { error } = await supabase
+        .from('competitors')
+        .delete()
+        .eq('id', competitorId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Concorrente excluído com sucesso",
+      });
+
+      navigate("/competitors");
+    } catch (error) {
+      console.error('Error deleting competitor:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir concorrente",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -73,7 +113,31 @@ const CompetitorDetails = () => {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <EditCompetitorDialog competitor={competitor} onUpdate={refetch} />
+          <div className="flex gap-2">
+            <EditCompetitorDialog competitor={competitor} onUpdate={refetch} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir este concorrente? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
         <Card>
@@ -90,7 +154,7 @@ const CompetitorDetails = () => {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold">
-                      {competitor.youtube || 'N/A'}
+                      {competitor.youtube_id || 'N/A'}
                     </div>
                     <div className="text-sm text-gray-500">YouTube</div>
                   </CardContent>

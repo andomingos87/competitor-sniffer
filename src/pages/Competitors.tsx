@@ -29,7 +29,7 @@ const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onCli
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-primary-100 p-3 rounded-lg">
             <p className="text-sm font-medium text-primary-700">YouTube</p>
-            <p className="text-lg font-semibold text-primary-900">{competitor.youtube || 'N/A'}</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.youtube_id || 'N/A'}</p>
           </div>
           <div className="bg-primary-100 p-3 rounded-lg">
             <p className="text-sm font-medium text-primary-700">Instagram</p>
@@ -141,7 +141,7 @@ const Competitors = () => {
                       {competitor.name}
                     </TableCell>
                     <TableCell>{competitor.website}</TableCell>
-                    <TableCell>{competitor.youtube || 'N/A'}</TableCell>
+                    <TableCell>{competitor.youtube_id || 'N/A'}</TableCell>
                     <TableCell>{competitor.instagram || 'N/A'}</TableCell>
                     <TableCell>{competitor.facebook || 'N/A'}</TableCell>
                     <TableCell>
