@@ -45,6 +45,41 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_metrics: {
+        Row: {
+          competitor_id: number | null
+          id: number
+          subscribers: number | null
+          updated_at: string | null
+          videos: number | null
+          views: number | null
+        }
+        Insert: {
+          competitor_id?: number | null
+          id?: number
+          subscribers?: number | null
+          updated_at?: string | null
+          videos?: number | null
+          views?: number | null
+        }
+        Update: {
+          competitor_id?: number | null
+          id?: number
+          subscribers?: number | null
+          updated_at?: string | null
+          videos?: number | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_metrics_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: true
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitors: {
         Row: {
           created_at: string | null
