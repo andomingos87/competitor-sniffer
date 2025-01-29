@@ -1,23 +1,27 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
+// Definição dos cabeçalhos CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS', // Adicionado para especificar métodos permitidos
 }
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+// Exporta a função padrão para a Edge Function
+export default async (req) => {
+  // Trata requisições de preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Inicializa o cliente Supabase
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Parse the request body
+    // Analisa o corpo da requisição
     const { youtube_id } = await req.json()
 
     if (!youtube_id) {
@@ -31,7 +35,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get competitor_id from the youtube_id
+    // Obtém competitor_id a partir do youtube_id
     const { data: competitor, error: competitorError } = await supabaseClient
       .from('competitors')
       .select('id')
@@ -49,14 +53,14 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Insert metrics into the database
+    // Insere métricas no banco de dados
     const { error: metricsError } = await supabaseClient
       .from('competitor_metrics')
       .insert({
         competitor_id: competitor.id,
         subscribers: 0, // Será atualizado pelo webhook
-        views: 0,      // Será atualizado pelo webhook
-        videos: 0      // Será atualizado pelo webhook
+        views: 0,        // Será atualizado pelo webhook
+        videos: 0        // Será atualizado pelo webhook
       })
 
     if (metricsError) {
@@ -88,4 +92,4 @@ Deno.serve(async (req) => {
       }
     )
   }
-})
+}
