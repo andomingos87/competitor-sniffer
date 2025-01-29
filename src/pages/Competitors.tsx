@@ -1,6 +1,6 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -14,16 +14,38 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CompetitorDialog } from "@/components/CompetitorDialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Competitor } from "@/types/competitor";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
-const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onClick: () => void }) => (
+const CompetitorCard = ({ 
+  competitor, 
+  onClick,
+  onSelect,
+  isSelected 
+}: { 
+  competitor: Competitor; 
+  onClick: () => void;
+  onSelect: (checked: boolean) => void;
+  isSelected: boolean;
+}) => (
   <Card 
     className="cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4 border-l-primary-600" 
-    onClick={onClick}
   >
-    <CardHeader>
-      <CardTitle className="text-lg text-primary-800">{competitor.name}</CardTitle>
+    <CardHeader className="flex flex-row items-center gap-4">
+      <Checkbox 
+        checked={isSelected}
+        onCheckedChange={onSelect}
+        onClick={(e) => e.stopPropagation()}
+      />
+      <CardTitle 
+        className="text-lg text-primary-800 flex-1"
+        onClick={onClick}
+      >
+        {competitor.name}
+      </CardTitle>
     </CardHeader>
-    <CardContent>
+    <CardContent onClick={onClick}>
       <div className="space-y-2">
         <p className="text-sm text-gray-500">{competitor.website}</p>
         <div className="grid grid-cols-2 gap-4">
@@ -54,6 +76,9 @@ const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onCli
 const Competitors = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 
   const { data: competitors, isLoading } = useQuery({
     queryKey: ['competitors'],
@@ -76,6 +101,50 @@ const Competitors = () => {
     navigate(`/competitors/${id}`);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(competitors?.map(c => c.id) || []);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelect = (id: number, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(i => i !== id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedIds.length) return;
+
+    try {
+      const { error } = await supabase
+        .from('competitors')
+        .delete()
+        .in('id', selectedIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `${selectedIds.length} concorrente(s) deletado(s) com sucesso`,
+      });
+
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ['competitors'] });
+    } catch (error) {
+      console.error('Error deleting competitors:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar concorrentes",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -95,7 +164,19 @@ const Competitors = () => {
             Monitore e analise seus principais concorrentes de forma inteligente
           </p>
         </div>
-        <CompetitorDialog />
+        <div className="flex gap-2">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              className="whitespace-nowrap"
+            >
+              <Trash2 className="h-4 w-4" />
+              Deletar ({selectedIds.length})
+            </Button>
+          )}
+          <CompetitorDialog />
+        </div>
       </div>
 
       <Card className="shadow-md border-t-4 border-t-primary-600">
@@ -114,6 +195,8 @@ const Competitors = () => {
                   key={competitor.id}
                   competitor={competitor}
                   onClick={() => handleCompetitorClick(competitor.id)}
+                  onSelect={(checked) => handleSelect(competitor.id, checked)}
+                  isSelected={selectedIds.includes(competitor.id)}
                 />
               ))}
             </div>
@@ -121,6 +204,12 @@ const Competitors = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-primary-50">
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={selectedIds.length === competitors?.length}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className="text-primary-900">Nome</TableHead>
                   <TableHead className="text-primary-900">Website</TableHead>
                   <TableHead className="text-primary-900">YouTube</TableHead>
@@ -135,19 +224,35 @@ const Competitors = () => {
                   <TableRow
                     key={competitor.id}
                     className="cursor-pointer hover:bg-primary-50 transition-colors"
-                    onClick={() => handleCompetitorClick(competitor.id)}
                   >
-                    <TableCell className="font-medium text-primary-800">
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.includes(competitor.id)}
+                        onCheckedChange={(checked) => handleSelect(competitor.id, checked)}
+                      />
+                    </TableCell>
+                    <TableCell 
+                      className="font-medium text-primary-800"
+                      onClick={() => handleCompetitorClick(competitor.id)}
+                    >
                       {competitor.name}
                     </TableCell>
-                    <TableCell>{competitor.website}</TableCell>
-                    <TableCell>{competitor.youtube_id || 'N/A'}</TableCell>
-                    <TableCell>{competitor.instagram || 'N/A'}</TableCell>
-                    <TableCell>{competitor.facebook || 'N/A'}</TableCell>
-                    <TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
+                      {competitor.website}
+                    </TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
+                      {competitor.youtube_id || 'N/A'}
+                    </TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
+                      {competitor.instagram || 'N/A'}
+                    </TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
+                      {competitor.facebook || 'N/A'}
+                    </TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
                       {new Date(competitor.created_at || '').toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={() => handleCompetitorClick(competitor.id)}>
                       <ArrowRight className="h-4 w-4 text-primary-600" />
                     </TableCell>
                   </TableRow>

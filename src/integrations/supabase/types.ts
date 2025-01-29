@@ -49,6 +49,7 @@ export type Database = {
         Row: {
           competitor_id: number | null
           id: number
+          nome_canal: string | null
           subscribers: number | null
           updated_at: string | null
           videos: number | null
@@ -57,6 +58,7 @@ export type Database = {
         Insert: {
           competitor_id?: number | null
           id?: number
+          nome_canal?: string | null
           subscribers?: number | null
           updated_at?: string | null
           videos?: number | null
@@ -65,6 +67,7 @@ export type Database = {
         Update: {
           competitor_id?: number | null
           id?: number
+          nome_canal?: string | null
           subscribers?: number | null
           updated_at?: string | null
           videos?: number | null
