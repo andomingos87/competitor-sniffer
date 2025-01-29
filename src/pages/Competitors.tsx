@@ -40,29 +40,34 @@ const mockCompetitors: Competitor[] = [
 ];
 
 const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onClick: () => void }) => (
-  <Card className="cursor-pointer hover:bg-gray-50" onClick={onClick}>
+  <Card 
+    className="cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4 border-l-primary-600" 
+    onClick={onClick}
+  >
     <CardHeader>
-      <CardTitle className="text-lg">{competitor.name}</CardTitle>
+      <CardTitle className="text-lg text-primary-800">{competitor.name}</CardTitle>
     </CardHeader>
     <CardContent>
       <div className="space-y-2">
         <p className="text-sm text-gray-500">{competitor.website}</p>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm font-medium">Posts</p>
-            <p className="text-lg">{competitor.metrics.posts}</p>
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <p className="text-sm font-medium text-primary-700">Posts</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.posts}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium">Engajamento</p>
-            <p className="text-lg">{competitor.metrics.engagement}%</p>
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <p className="text-sm font-medium text-primary-700">Engajamento</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.engagement}%</p>
           </div>
-          <div>
-            <p className="text-sm font-medium">Seguidores</p>
-            <p className="text-lg">{competitor.metrics.followers.toLocaleString()}</p>
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <p className="text-sm font-medium text-primary-700">Seguidores</p>
+            <p className="text-lg font-semibold text-primary-900">
+              {competitor.metrics.followers.toLocaleString()}
+            </p>
           </div>
-          <div>
-            <p className="text-sm font-medium">Última Atualização</p>
-            <p className="text-lg">{competitor.metrics.lastUpdated}</p>
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <p className="text-sm font-medium text-primary-700">Última Atualização</p>
+            <p className="text-lg font-semibold text-primary-900">{competitor.metrics.lastUpdated}</p>
           </div>
         </div>
       </div>
@@ -80,22 +85,26 @@ const Competitors = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-primary-100 to-primary-50 p-6 rounded-lg">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Concorrentes</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-2">
-            Monitore e analise seus principais concorrentes
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary-900">
+            Análise de Concorrentes
+          </h1>
+          <p className="text-sm sm:text-base text-primary-700 mt-2">
+            Monitore e analise seus principais concorrentes de forma inteligente
           </p>
         </div>
-        <Button className="gap-2 w-full sm:w-auto">
+        <Button 
+          className="gap-2 w-full sm:w-auto bg-primary-600 hover:bg-primary-700 transition-colors"
+        >
           <Users className="h-4 w-4" />
           Adicionar Concorrente
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Concorrentes</CardTitle>
+      <Card className="shadow-md border-t-4 border-t-primary-600">
+        <CardHeader className="bg-gradient-to-r from-primary-50 to-white">
+          <CardTitle className="text-primary-800">Lista de Concorrentes</CardTitle>
         </CardHeader>
         <CardContent>
           {isMobile ? (
@@ -111,13 +120,13 @@ const Competitors = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Website</TableHead>
-                  <TableHead>Posts</TableHead>
-                  <TableHead>Engajamento</TableHead>
-                  <TableHead>Seguidores</TableHead>
-                  <TableHead>Última Atualização</TableHead>
+                <TableRow className="bg-primary-50">
+                  <TableHead className="text-primary-900">Nome</TableHead>
+                  <TableHead className="text-primary-900">Website</TableHead>
+                  <TableHead className="text-primary-900">Posts</TableHead>
+                  <TableHead className="text-primary-900">Engajamento</TableHead>
+                  <TableHead className="text-primary-900">Seguidores</TableHead>
+                  <TableHead className="text-primary-900">Última Atualização</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -125,21 +134,21 @@ const Competitors = () => {
                 {mockCompetitors.map((competitor) => (
                   <TableRow
                     key={competitor.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-primary-50 transition-colors"
                     onClick={() => handleCompetitorClick(competitor.id)}
                   >
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-primary-800">
                       {competitor.name}
                     </TableCell>
                     <TableCell>{competitor.website}</TableCell>
-                    <TableCell>{competitor.metrics.posts}</TableCell>
-                    <TableCell>{competitor.metrics.engagement}%</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium">{competitor.metrics.posts}</TableCell>
+                    <TableCell className="font-medium">{competitor.metrics.engagement}%</TableCell>
+                    <TableCell className="font-medium">
                       {competitor.metrics.followers.toLocaleString()}
                     </TableCell>
                     <TableCell>{competitor.metrics.lastUpdated}</TableCell>
                     <TableCell>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
+                      <ArrowRight className="h-4 w-4 text-primary-600" />
                     </TableCell>
                   </TableRow>
                 ))}
