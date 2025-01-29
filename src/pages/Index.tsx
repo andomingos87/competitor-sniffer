@@ -8,9 +8,17 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-800 mb-2">
+          <div className="mb-4">
+            <h1 className="text-5xl font-extrabold text-primary-800 tracking-tighter">
+              SPIA
+              <span className="block text-sm font-medium text-primary-600 mt-1">
+                Sistema Profissional de Inteligência e Análise
+              </span>
+            </h1>
+          </div>
+          <h2 className="text-4xl font-bold text-primary-800 mb-2">
             Monitor de Concorrentes
-          </h1>
+          </h2>
           <p className="text-gray-600">
             Monitore seus concorrentes e obtenha insights valiosos
           </p>
