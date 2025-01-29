@@ -15,7 +15,15 @@ const Competitors = () => {
   const { data: competitors, isLoading } = useQuery({
     queryKey: ['competitors'],
     queryFn: async () => {
-      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrentes');
+      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrentes', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'omit' // Don't send credentials
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch competitors');
       }
@@ -52,6 +60,8 @@ const Competitors = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'omit', // Don't send credentials
         body: JSON.stringify({ ids: selectedIds }),
       });
 

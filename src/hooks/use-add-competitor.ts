@@ -1,10 +1,6 @@
-import { useState } from "react";
+import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-
-interface AddCompetitorData {
-  name: string;
-  youtube_id: string;
-}
+import type { AddCompetitorData } from "@/types/competitor";
 
 export const useAddCompetitor = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +15,8 @@ export const useAddCompetitor = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'omit', // Don't send credentials
         body: JSON.stringify({ 
           name: data.name,
           youtube_id: data.youtube_id 
