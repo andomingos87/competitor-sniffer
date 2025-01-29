@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { EditCompetitorDialog } from "@/components/EditCompetitorDialog";
 import type { Competitor } from "@/types/competitor";
 
 const CompetitorDetails = () => {
@@ -11,7 +12,7 @@ const CompetitorDetails = () => {
   const navigate = useNavigate();
   const competitorId = id ? parseInt(id) : null;
 
-  const { data: competitor, isLoading } = useQuery({
+  const { data: competitor, isLoading, refetch } = useQuery({
     queryKey: ['competitor', competitorId],
     queryFn: async () => {
       if (!competitorId) return null;
@@ -63,60 +64,61 @@ const CompetitorDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => navigate("/competitors")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{competitor.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div>
-                  <h3 className="font-medium text-gray-500">Website</h3>
-                  <p>{competitor.website || 'Não informado'}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">
-                        {competitor.youtube || 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-500">YouTube</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">
-                        {competitor.instagram || 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Instagram
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">
-                        {competitor.facebook || 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Facebook
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => navigate("/competitors")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+          <EditCompetitorDialog competitor={competitor} onUpdate={refetch} />
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{competitor.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div>
+                <h3 className="font-medium text-gray-500">Website</h3>
+                <p>{competitor.website || 'Não informado'}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {competitor.youtube || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-500">YouTube</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {competitor.instagram || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Instagram
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {competitor.facebook || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Facebook
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
