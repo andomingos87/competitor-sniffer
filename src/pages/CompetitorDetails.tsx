@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardCard } from "@/components/DashboardCard";
+import { MetricsChart } from "@/components/MetricsChart";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +74,27 @@ const CompetitorDetails = () => {
     enabled: !!competitorId,
   });
 
+  const { data: metricsHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['metrics_history', competitorId],
+    queryFn: async () => {
+      if (!competitorId) return null;
+
+      const { data, error } = await supabase
+        .from('competitor_metrics')
+        .select('*')
+        .eq('competitor_id', competitorId)
+        .order('updated_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching metrics history:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!competitorId,
+  });
+
   const handleDelete = async () => {
     if (!competitorId) return;
 
@@ -100,7 +122,7 @@ const CompetitorDetails = () => {
     }
   };
 
-  if (isLoadingCompetitor || isLoadingMetrics) {
+  if (isLoadingCompetitor || isLoadingMetrics || isLoadingHistory) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -198,6 +220,39 @@ const CompetitorDetails = () => {
                   icon={<Video className="h-6 w-6" />}
                 />
               </div>
+
+              {metricsHistory && metricsHistory.length > 0 && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Evolução das Métricas</h3>
+                  
+                  <Card className="p-4">
+                    <h4 className="text-md font-medium text-gray-600 mb-4">Inscritos</h4>
+                    <MetricsChart
+                      data={metricsHistory}
+                      metric="subscribers"
+                      color="#4f46e5"
+                    />
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="text-md font-medium text-gray-600 mb-4">Visualizações</h4>
+                    <MetricsChart
+                      data={metricsHistory}
+                      metric="views"
+                      color="#059669"
+                    />
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="text-md font-medium text-gray-600 mb-4">Vídeos</h4>
+                    <MetricsChart
+                      data={metricsHistory}
+                      metric="videos"
+                      color="#dc2626"
+                    />
+                  </Card>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
