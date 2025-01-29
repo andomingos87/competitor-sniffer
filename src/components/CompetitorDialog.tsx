@@ -54,6 +54,22 @@ export const CompetitorDialog = () => {
     try {
       setIsLoading(true);
       
+      // First check if a competitor with this youtube_id already exists
+      const { data: existingCompetitor } = await supabase
+        .from('competitors')
+        .select()
+        .eq('youtube_id', data.youtube_id)
+        .single();
+
+      if (existingCompetitor) {
+        toast({
+          title: "Erro",
+          description: "Já existe um concorrente com este ID do YouTube",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: competitor, error } = await supabase
         .from('competitors')
         .insert([{
@@ -78,7 +94,7 @@ export const CompetitorDialog = () => {
       reset();
       setOpen(false);
       
-      // Navegar para a página do concorrente criado
+      // Navigate to the competitor's page
       navigate(`/competitors/${competitor.id}`);
     } catch (error) {
       console.error('Error adding competitor:', error);
