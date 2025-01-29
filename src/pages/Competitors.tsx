@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from "@/components/ui/card";
 import { CompetitorList } from "@/components/competitor/CompetitorList";
 import { CompetitorsHeader } from "@/components/competitor/CompetitorsHeader";
-import { CompetitorCard } from "@/components/competitor/CompetitorCard";
 import { useToast } from "@/hooks/use-toast";
+import type { Competitor } from "@/types/competitor";
 
 const Competitors = () => {
-  const isMobile = useIsMobile();
   const { toast } = useToast();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -21,7 +19,7 @@ const Competitors = () => {
           'Content-Type': 'application/json',
         },
         mode: 'cors', // Explicitly set CORS mode
-        credentials: 'omit' // Don't send credentials
+        credentials: 'omit', // Don't send credentials
       });
       
       if (!response.ok) {
@@ -29,11 +27,15 @@ const Competitors = () => {
       }
       return response.json();
     },
+    onError: (error) => {
+      console.error('Error fetching competitors:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar concorrentes",
+        variant: "destructive",
+      });
+    },
   });
-
-  const handleCompetitorClick = (id: number) => {
-    window.location.href = `/competitors/${id}`;
-  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -101,31 +103,12 @@ const Competitors = () => {
       />
 
       <Card className="shadow-md border-t-4 border-t-primary-600">
-        <CardHeader className="bg-gradient-to-r from-primary-50 to-white">
-          <CardTitle className="text-primary-800">Lista de Concorrentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isMobile ? (
-            <div className="grid gap-4">
-              {competitors?.map((competitor) => (
-                <CompetitorCard
-                  key={competitor.id}
-                  competitor={competitor}
-                  onClick={() => handleCompetitorClick(competitor.id)}
-                  onSelect={(checked) => handleSelect(competitor.id, checked)}
-                  isSelected={selectedIds.includes(competitor.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <CompetitorList
-              competitors={competitors}
-              selectedIds={selectedIds}
-              onSelect={handleSelect}
-              onSelectAll={handleSelectAll}
-            />
-          )}
-        </CardContent>
+        <CompetitorList
+          competitors={competitors}
+          selectedIds={selectedIds}
+          onSelect={handleSelect}
+          onSelectAll={handleSelectAll}
+        />
       </Card>
     </div>
   );
