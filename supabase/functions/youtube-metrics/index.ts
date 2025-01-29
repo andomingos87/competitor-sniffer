@@ -67,7 +67,7 @@ export default async (req) => {
     // Chama o endpoint externo para obter métricas do canal
     try {
       console.log(`Calling external API with youtube_id: ${youtube_id}`);
-      const externalResponse = await fetch('https://n8n-production-ff75.up.railway.app/webhook-test/concorrente-youtube', {
+      const externalResponse = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrente-youtube', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ youtube_id }),
