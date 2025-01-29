@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -9,180 +9,135 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface CompetitorFormData {
+  name: string;
+  website?: string;
+  youtube_id?: string;
+  instagram?: string;
+  facebook?: string;
+}
 
 export const CompetitorDialog = () => {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { register, handleSubmit, reset } = useForm<CompetitorFormData>();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    website: "",
-    youtube_id: "",
-    instagram: "",
-    facebook: "",
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const notifyYoutubeWebhook = async (youtube_id: string) => {
     try {
-      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook-test/concorrente-youtube', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ youtube_id }),
+      const { data, error } = await supabase.functions.invoke('youtube-metrics', {
+        body: { youtube_id }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to notify webhook');
+      if (error) {
+        console.error('Error notifying webhook:', error);
+        throw error;
       }
+
+      return data;
     } catch (error) {
       console.error('Error notifying webhook:', error);
-      toast({
-        title: "Aviso",
-        description: "Concorrente foi criado, mas houve um erro ao notificar o webhook",
-        variant: "destructive",
-      });
+      throw error;
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const onSubmit = async (data: CompetitorFormData) => {
     try {
-      const { data, error } = await supabase
-        .from("competitors")
-        .insert([formData])
+      const { data: competitor, error } = await supabase
+        .from('competitors')
+        .insert([data])
         .select()
         .single();
 
       if (error) throw error;
 
-      // If youtube_id exists, notify webhook
-      if (data && data.youtube_id) {
-        await notifyYoutubeWebhook(data.youtube_id);
+      if (competitor.youtube_id) {
+        await notifyYoutubeWebhook(competitor.youtube_id);
       }
 
       toast({
         title: "Sucesso",
         description: "Concorrente adicionado com sucesso",
       });
-      
-      setFormData({
-        name: "",
-        website: "",
-        youtube_id: "",
-        instagram: "",
-        facebook: "",
-      });
-      
+
+      queryClient.invalidateQueries({ queryKey: ['competitors'] });
+      reset();
       setOpen(false);
     } catch (error) {
-      console.error("Error adding competitor:", error);
+      console.error('Error adding competitor:', error);
       toast({
         title: "Erro",
         description: "Erro ao adicionar concorrente",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 w-full sm:w-auto bg-primary-600 hover:bg-primary-700 transition-colors">
-          <Users className="h-4 w-4" />
-          Adicionar Concorrente
-        </Button>
+        <Button>Adicionar Concorrente</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Adicionar Novo Concorrente</DialogTitle>
+          <DialogTitle>Adicionar Concorrente</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Nome
-            </label>
+            <Label htmlFor="name">Nome</Label>
             <Input
               id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
+              {...register("name", { required: true })}
               placeholder="Nome do concorrente"
-              required
             />
           </div>
-          
           <div className="space-y-2">
-            <label htmlFor="website" className="text-sm font-medium">
-              Website
-            </label>
+            <Label htmlFor="website">Website</Label>
             <Input
               id="website"
-              name="website"
-              type="url"
-              value={formData.website}
-              onChange={handleChange}
+              {...register("website")}
               placeholder="https://exemplo.com"
             />
           </div>
-          
           <div className="space-y-2">
-            <label htmlFor="youtube_id" className="text-sm font-medium">
-              YouTube ID
-            </label>
+            <Label htmlFor="youtube_id">ID do Canal do YouTube</Label>
             <Input
               id="youtube_id"
-              name="youtube_id"
-              value={formData.youtube_id}
-              onChange={handleChange}
+              {...register("youtube_id")}
               placeholder="ID do canal"
             />
           </div>
-          
           <div className="space-y-2">
-            <label htmlFor="instagram" className="text-sm font-medium">
-              Instagram
-            </label>
+            <Label htmlFor="instagram">Instagram</Label>
             <Input
               id="instagram"
-              name="instagram"
-              value={formData.instagram}
-              onChange={handleChange}
+              {...register("instagram")}
               placeholder="@usuario"
             />
           </div>
-          
           <div className="space-y-2">
-            <label htmlFor="facebook" className="text-sm font-medium">
-              Facebook
-            </label>
+            <Label htmlFor="facebook">Facebook</Label>
             <Input
               id="facebook"
-              name="facebook"
-              value={formData.facebook}
-              onChange={handleChange}
-              placeholder="URL da página"
+              {...register("facebook")}
+              placeholder="@usuario"
             />
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? "Adicionando..." : "Adicionar Concorrente"}
-          </Button>
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit">Salvar</Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
