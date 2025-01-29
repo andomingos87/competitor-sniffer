@@ -1,6 +1,5 @@
 import { ArrowRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CompetitorDialog } from "@/components/CompetitorDialog";
 import type { Competitor } from "@/types/competitor";
 
 // Dados mockados para exemplo
@@ -94,12 +94,7 @@ const Competitors = () => {
             Monitore e analise seus principais concorrentes de forma inteligente
           </p>
         </div>
-        <Button 
-          className="gap-2 w-full sm:w-auto bg-primary-600 hover:bg-primary-700 transition-colors"
-        >
-          <Users className="h-4 w-4" />
-          Adicionar Concorrente
-        </Button>
+        <CompetitorDialog />
       </div>
 
       <Card className="shadow-md border-t-4 border-t-primary-600">

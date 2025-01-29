@@ -45,6 +45,36 @@ export type Database = {
         }
         Relationships: []
       }
+      competitors: {
+        Row: {
+          created_at: string | null
+          facebook: string | null
+          id: number
+          instagram: string | null
+          name: string | null
+          website: string | null
+          youtube: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facebook?: string | null
+          id?: number
+          instagram?: string | null
+          name?: string | null
+          website?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facebook?: string | null
+          id?: number
+          instagram?: string | null
+          name?: string | null
+          website?: string | null
+          youtube?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           content: string | null
