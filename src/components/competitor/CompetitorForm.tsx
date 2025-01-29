@@ -1,63 +1,57 @@
-import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Card } from "@/components/ui/card";
+import { useAddCompetitor } from "@/hooks/use-add-competitor";
 
-interface CompetitorFormData {
-  name: string;
-  youtube_id: string;
-}
+export const CompetitorForm = () => {
+  const [url, setUrl] = useState("");
+  const { toast } = useToast();
+  const { addCompetitor, isLoading } = useAddCompetitor(); // Hook para adicionar concorrente
 
-interface CompetitorFormProps {
-  onSubmit: (data: CompetitorFormData) => Promise<void>;
-  onCancel: () => void;
-  isLoading: boolean;
-}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!url) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira uma URL válida",
+        variant: "destructive",
+      });
+      return;
+    }
 
-export const CompetitorForm = ({ onSubmit, onCancel, isLoading }: CompetitorFormProps) => {
-  const { register, handleSubmit } = useForm<CompetitorFormData>();
+    try {
+      await addCompetitor({ name: url, youtube_id: url }); // Chama apenas uma vez
+      toast({
+        title: "Sucesso",
+        description: "Concorrente adicionado para monitoramento",
+      });
+      setUrl("");
+    } catch (error) {
+      toast({
+        title: "Erro ao adicionar concorrente",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Nome</Label>
+    <Card className="p-6 bg-white shadow-lg animate-fade-in">
+      <h2 className="text-2xl font-bold mb-4 text-primary-800">Adicionar Concorrente</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          id="name"
-          {...register("name", { required: true })}
-          placeholder="Nome do concorrente"
-          disabled={isLoading}
+          type="text"
+          placeholder="Insira a URL do concorrente"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
         />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="youtube_id">ID do Canal do YouTube</Label>
-        <Input
-          id="youtube_id"
-          {...register("youtube_id", { required: true })}
-          placeholder="ID do canal"
-          disabled={isLoading}
-        />
-      </div>
-      <div className="flex justify-end space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancelar
-        </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Adicionando...
-            </>
-          ) : (
-            'Salvar'
-          )}
+          {isLoading ? "Adicionando..." : "Adicionar Concorrente"}
         </Button>
-      </div>
-    </form>
+      </form>
+    </Card>
   );
 };
