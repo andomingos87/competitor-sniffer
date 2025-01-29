@@ -36,7 +36,7 @@ const CompetitorDetails = () => {
         .from('competitors')
         .select('*')
         .eq('id', competitorId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching competitor:', error);
@@ -59,12 +59,9 @@ const CompetitorDetails = () => {
         .eq('competitor_id', competitorId)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          return null; // No metrics found
-        }
         console.error('Error fetching metrics:', error);
         throw error;
       }
