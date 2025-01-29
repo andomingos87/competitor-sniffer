@@ -80,8 +80,19 @@ export default async (req) => {
 
       const { visualizações: views, inscritos: subscribers, videos } = externalData;
 
-      // Insert metrics
-      const { error: metricsError } = await supabaseClient
+      // Delete any existing metrics for this competitor
+      const { error: deleteError } = await supabaseClient
+        .from('competitor_metrics')
+        .delete()
+        .eq('competitor_id', competitor.id);
+
+      if (deleteError) {
+        console.error('Error deleting existing metrics:', deleteError);
+        throw deleteError;
+      }
+
+      // Insert new metrics
+      const { data: metrics, error: metricsError } = await supabaseClient
         .from('competitor_metrics')
         .insert({
           competitor_id: competitor.id,
@@ -89,22 +100,21 @@ export default async (req) => {
           views,
           videos,
           updated_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
       if (metricsError) {
         console.error('Error inserting metrics:', metricsError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to save metrics', details: metricsError }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        throw metricsError;
       }
 
-      console.log('Metrics saved successfully');
+      console.log('Metrics saved successfully:', metrics);
 
       return new Response(
         JSON.stringify({
           message: 'Metrics updated successfully',
-          data: { views, subscribers, videos }
+          data: metrics
         }),
         { 
           status: 200, 
@@ -113,10 +123,10 @@ export default async (req) => {
       );
 
     } catch (externalError) {
-      console.error('Error with external API:', externalError);
+      console.error('Error with external API or metrics update:', externalError);
       return new Response(
         JSON.stringify({ 
-          error: 'External API error', 
+          error: 'Failed to process metrics', 
           details: externalError.message 
         }),
         { 
