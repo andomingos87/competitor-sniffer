@@ -59,7 +59,7 @@ export const CompetitorDialog = () => {
         .from('competitors')
         .select()
         .eq('youtube_id', data.youtube_id)
-        .single();
+        .maybeSingle();
 
       if (existingCompetitor) {
         toast({
