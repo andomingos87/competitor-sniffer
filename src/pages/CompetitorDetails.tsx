@@ -1,25 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Trash2, Users, Eye, Video } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardCard } from "@/components/DashboardCard";
-import { MetricsChart } from "@/components/MetricsChart";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { EditCompetitorDialog } from "@/components/EditCompetitorDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Competitor } from "@/types/competitor";
+import { CompetitorHeader } from "@/components/competitor/CompetitorHeader";
+import { CompetitorMetrics } from "@/components/competitor/CompetitorMetrics";
+import { CompetitorCharts } from "@/components/competitor/CompetitorCharts";
+import { CompetitorSocial } from "@/components/competitor/CompetitorSocial";
 
 const CompetitorDetails = () => {
   const { id } = useParams();
@@ -131,14 +119,12 @@ const CompetitorDetails = () => {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => navigate("/competitors")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
+          <CompetitorHeader
+            competitor={competitor}
+            onDelete={handleDelete}
+            onBack={() => navigate("/competitors")}
+            onUpdate={refetch}
+          />
           <div className="mt-6 text-center text-gray-500">
             Concorrente não encontrado
           </div>
@@ -150,41 +136,12 @@ const CompetitorDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => navigate("/competitors")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
-          <div className="flex gap-2">
-            <EditCompetitorDialog competitor={competitor} onUpdate={refetch} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  Excluir
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir este concorrente? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    Confirmar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
+        <CompetitorHeader
+          competitor={competitor}
+          onDelete={handleDelete}
+          onBack={() => navigate("/competitors")}
+          onUpdate={refetch}
+        />
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -197,90 +154,13 @@ const CompetitorDetails = () => {
                 <p>{competitor.website || 'Não informado'}</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <DashboardCard
-                  title="Inscritos"
-                  value={metrics?.subscribers?.toLocaleString() || 'N/A'}
-                  description="Total de inscritos no canal"
-                  icon={<Users className="h-6 w-6" />}
-                />
-                <DashboardCard
-                  title="Visualizações"
-                  value={metrics?.views?.toLocaleString() || 'N/A'}
-                  description="Total de visualizações"
-                  icon={<Eye className="h-6 w-6" />}
-                />
-                <DashboardCard
-                  title="Vídeos"
-                  value={metrics?.videos?.toLocaleString() || 'N/A'}
-                  description="Total de vídeos publicados"
-                  icon={<Video className="h-6 w-6" />}
-                />
-              </div>
+              <CompetitorMetrics metrics={metrics} />
 
               {metricsHistory && metricsHistory.length > 0 && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-700">Evolução das Métricas</h3>
-                  
-                  <Card className="p-4">
-                    <h4 className="text-md font-medium text-gray-600 mb-4">Inscritos</h4>
-                    <MetricsChart
-                      data={metricsHistory}
-                      metric="subscribers"
-                      color="#4f46e5"
-                    />
-                  </Card>
-
-                  <Card className="p-4">
-                    <h4 className="text-md font-medium text-gray-600 mb-4">Visualizações</h4>
-                    <MetricsChart
-                      data={metricsHistory}
-                      metric="views"
-                      color="#059669"
-                    />
-                  </Card>
-
-                  <Card className="p-4">
-                    <h4 className="text-md font-medium text-gray-600 mb-4">Vídeos</h4>
-                    <MetricsChart
-                      data={metricsHistory}
-                      metric="videos"
-                      color="#dc2626"
-                    />
-                  </Card>
-                </div>
+                <CompetitorCharts metricsHistory={metricsHistory} />
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
-                      {competitor.youtube_id || 'N/A'}
-                    </div>
-                    <div className="text-sm text-gray-500">YouTube</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
-                      {competitor.instagram || 'N/A'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Instagram
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
-                      {competitor.facebook || 'N/A'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Facebook
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <CompetitorSocial competitor={competitor} />
             </div>
           </CardContent>
         </Card>
