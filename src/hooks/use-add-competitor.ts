@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Competitor } from "@/types/competitor";
 
 interface AddCompetitorData {
   name: string;
@@ -11,57 +8,41 @@ interface AddCompetitorData {
 
 export const useAddCompetitor = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const notifyWebhook = async (youtube_id: string) => {
-    const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrente-youtube', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ youtube_id }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to notify webhook');
-    }
-  };
-
-  const addCompetitor = async (data: AddCompetitorData): Promise<Competitor | null> => {
+  const addCompetitor = async (data: AddCompetitorData): Promise<boolean> => {
     try {
       setIsLoading(true);
       
-      const { data: competitor, error } = await supabase
-        .from('competitors')
-        .insert([{
+      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrente-youtube', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
           name: data.name,
-          youtube_id: data.youtube_id
-        }])
-        .select()
-        .single();
+          youtube_id: data.youtube_id 
+        }),
+      });
 
-      if (error) throw error;
-
-      if (competitor) {
-        await notifyWebhook(competitor.youtube_id || '');
-        queryClient.invalidateQueries({ queryKey: ['competitors'] });
-        toast({
-          title: "Sucesso",
-          description: "Concorrente adicionado com sucesso",
-        });
-        return competitor;
+      if (!response.ok) {
+        throw new Error('Failed to notify webhook');
       }
+
+      toast({
+        title: "Sucesso",
+        description: "Solicitação enviada com sucesso",
+      });
       
-      return null;
+      return true;
     } catch (error) {
-      console.error('Error adding competitor:', error);
+      console.error('Error calling webhook:', error);
       toast({
         title: "Erro",
-        description: "Erro ao adicionar concorrente",
+        description: "Erro ao processar a solicitação",
         variant: "destructive",
       });
-      return null;
+      return false;
     } finally {
       setIsLoading(false);
     }

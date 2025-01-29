@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,13 +13,11 @@ import { useAddCompetitor } from "@/hooks/use-add-competitor";
 export const CompetitorDialog = () => {
   const [open, setOpen] = useState(false);
   const { addCompetitor, isLoading } = useAddCompetitor();
-  const navigate = useNavigate();
 
   const handleSubmit = async (data: { name: string; youtube_id: string }) => {
-    const competitor = await addCompetitor(data);
-    if (competitor) {
+    const success = await addCompetitor(data);
+    if (success) {
       setOpen(false);
-      navigate(`/competitors/${competitor.id}`);
     }
   };
 
