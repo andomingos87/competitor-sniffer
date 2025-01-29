@@ -122,12 +122,21 @@ const Competitors = () => {
     if (!selectedIds.length) return;
 
     try {
-      const { error } = await supabase
+      // First, delete related metrics
+      const { error: metricsError } = await supabase
+        .from('competitor_metrics')
+        .delete()
+        .in('competitor_id', selectedIds);
+
+      if (metricsError) throw metricsError;
+
+      // Then, delete the competitors
+      const { error: competitorsError } = await supabase
         .from('competitors')
         .delete()
         .in('id', selectedIds);
 
-      if (error) throw error;
+      if (competitorsError) throw competitorsError;
 
       toast({
         title: "Sucesso",
