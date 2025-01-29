@@ -19,7 +19,7 @@ export const CompetitorDialog = () => {
   const [formData, setFormData] = useState({
     name: "",
     website: "",
-    youtube: "",
+    youtube_id: "",
     instagram: "",
     facebook: "",
   });
@@ -29,16 +29,46 @@ export const CompetitorDialog = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const notifyYoutubeWebhook = async (youtube_id: string) => {
+    try {
+      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook-test/concorrente-youtube', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ youtube_id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to notify webhook');
+      }
+    } catch (error) {
+      console.error('Error notifying webhook:', error);
+      toast({
+        title: "Aviso",
+        description: "Concorrente foi criado, mas houve um erro ao notificar o webhook",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("competitors")
-        .insert([formData]);
+        .insert([formData])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // If youtube_id exists, notify webhook
+      if (data && data.youtube_id) {
+        await notifyYoutubeWebhook(data.youtube_id);
+      }
 
       toast({
         title: "Sucesso",
@@ -48,7 +78,7 @@ export const CompetitorDialog = () => {
       setFormData({
         name: "",
         website: "",
-        youtube: "",
+        youtube_id: "",
         instagram: "",
         facebook: "",
       });
@@ -108,15 +138,15 @@ export const CompetitorDialog = () => {
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="youtube" className="text-sm font-medium">
-              YouTube
+            <label htmlFor="youtube_id" className="text-sm font-medium">
+              YouTube ID
             </label>
             <Input
-              id="youtube"
-              name="youtube"
-              value={formData.youtube}
+              id="youtube_id"
+              name="youtube_id"
+              value={formData.youtube_id}
               onChange={handleChange}
-              placeholder="URL do canal"
+              placeholder="ID do canal"
             />
           </div>
           

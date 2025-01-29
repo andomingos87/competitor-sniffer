@@ -25,7 +25,7 @@ export const EditCompetitorDialog = ({ competitor, onUpdate }: EditCompetitorDia
   const [formData, setFormData] = useState({
     name: competitor.name || "",
     website: competitor.website || "",
-    youtube: competitor.youtube || "",
+    youtube_id: competitor.youtube_id || "",
     instagram: competitor.instagram || "",
     facebook: competitor.facebook || "",
   });
@@ -107,15 +107,15 @@ export const EditCompetitorDialog = ({ competitor, onUpdate }: EditCompetitorDia
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="youtube" className="text-sm font-medium">
-              YouTube
+            <label htmlFor="youtube_id" className="text-sm font-medium">
+              YouTube ID
             </label>
             <Input
-              id="youtube"
-              name="youtube"
-              value={formData.youtube}
+              id="youtube_id"
+              name="youtube_id"
+              value={formData.youtube_id}
               onChange={handleChange}
-              placeholder="URL do canal"
+              placeholder="ID do canal"
             />
           </div>
           

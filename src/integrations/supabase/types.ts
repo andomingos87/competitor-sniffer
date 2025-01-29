@@ -53,7 +53,7 @@ export type Database = {
           instagram: string | null
           name: string | null
           website: string | null
-          youtube: string | null
+          youtube_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -62,7 +62,7 @@ export type Database = {
           instagram?: string | null
           name?: string | null
           website?: string | null
-          youtube?: string | null
+          youtube_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -71,7 +71,7 @@ export type Database = {
           instagram?: string | null
           name?: string | null
           website?: string | null
-          youtube?: string | null
+          youtube_id?: string | null
         }
         Relationships: []
       }
