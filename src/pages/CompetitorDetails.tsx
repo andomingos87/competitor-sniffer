@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Users, Eye, Video } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/DashboardCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +26,7 @@ const CompetitorDetails = () => {
   const { toast } = useToast();
   const competitorId = id ? parseInt(id) : null;
 
-  const { data: competitor, isLoading, refetch } = useQuery({
+  const { data: competitor, isLoading: isLoadingCompetitor, refetch } = useQuery({
     queryKey: ['competitor', competitorId],
     queryFn: async () => {
       if (!competitorId) return null;
@@ -42,6 +43,32 @@ const CompetitorDetails = () => {
       }
 
       return data as Competitor;
+    },
+    enabled: !!competitorId,
+  });
+
+  const { data: metrics, isLoading: isLoadingMetrics } = useQuery({
+    queryKey: ['competitor_metrics', competitorId],
+    queryFn: async () => {
+      if (!competitorId) return null;
+
+      const { data, error } = await supabase
+        .from('competitor_metrics')
+        .select('*')
+        .eq('competitor_id', competitorId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null; // No metrics found
+        }
+        console.error('Error fetching metrics:', error);
+        throw error;
+      }
+
+      return data;
     },
     enabled: !!competitorId,
   });
@@ -73,7 +100,7 @@ const CompetitorDetails = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingCompetitor || isLoadingMetrics) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -150,6 +177,28 @@ const CompetitorDetails = () => {
                 <h3 className="font-medium text-gray-500">Website</h3>
                 <p>{competitor.website || 'Não informado'}</p>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <DashboardCard
+                  title="Inscritos"
+                  value={metrics?.subscribers?.toLocaleString() || 'N/A'}
+                  description="Total de inscritos no canal"
+                  icon={<Users className="h-6 w-6" />}
+                />
+                <DashboardCard
+                  title="Visualizações"
+                  value={metrics?.views?.toLocaleString() || 'N/A'}
+                  description="Total de visualizações"
+                  icon={<Eye className="h-6 w-6" />}
+                />
+                <DashboardCard
+                  title="Vídeos"
+                  value={metrics?.videos?.toLocaleString() || 'N/A'}
+                  description="Total de vídeos publicados"
+                  icon={<Video className="h-6 w-6" />}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="pt-6">
