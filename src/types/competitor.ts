@@ -7,3 +7,8 @@ export interface Competitor {
   facebook: string | null;
   created_at: string | null;
 }
+
+export interface AddCompetitorData {
+  name: string;
+  youtube_id: string;
+}
