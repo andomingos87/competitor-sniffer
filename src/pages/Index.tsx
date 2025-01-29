@@ -11,9 +11,6 @@ const Index = () => {
           <div className="mb-4">
             <h1 className="text-5xl font-extrabold text-primary-800 tracking-tighter">
               SPIA
-              <span className="block text-sm font-medium text-primary-600 mt-1">
-                Sistema Profissional de Inteligência e Análise
-              </span>
             </h1>
           </div>
           <h2 className="text-4xl font-bold text-primary-800 mb-2">
