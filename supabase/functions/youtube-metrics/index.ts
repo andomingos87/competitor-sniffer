@@ -64,25 +64,7 @@ export default async (req) => {
       );
     }
 
-    // Insere métricas no banco de dados
-    const { error: metricsError } = await supabaseClient
-      .from('competitor_metrics')
-      .insert({
-        competitor_id: competitor.id,
-        subscribers: 0, // Será atualizado pelo webhook
-        views: 0,       // Será atualizado pelo webhook
-        videos: 0       // Será atualizado pelo webhook
-      });
-
-    if (metricsError) {
-      console.error('Error inserting metrics:', metricsError?.message || metricsError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to insert metrics', details: metricsError }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Chama o endpoint externo
+    // Chama o endpoint externo para obter métricas do canal
     try {
       const externalResponse = await fetch('https://n8n-production-ff75.up.railway.app/webhook-test/concorrente-youtube', {
         method: 'POST',
@@ -101,6 +83,43 @@ export default async (req) => {
 
       const externalData = await externalResponse.json();
       console.log('External API response:', externalData);
+
+      // Extrai os dados retornados pela API externa
+      const { titulo_canal, visualizações, inscritos, videos } = externalData;
+
+      // Insere ou atualiza métricas no banco de dados
+      const { error: metricsError } = await supabaseClient
+        .from('competitor_metrics')
+        .insert({
+          competitor_id: competitor.id,
+          subscribers: inscritos,
+          views: visualizações,
+          videos: videos,
+        })
+        .onConflict('competitor_id') // Atualiza caso já exista um registro para este competitor_id
+        .merge();
+
+      if (metricsError) {
+        console.error('Error inserting/updating metrics:', metricsError?.message || metricsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to insert/update metrics', details: metricsError }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Retorna uma resposta de sucesso com os dados obtidos
+      return new Response(
+        JSON.stringify({
+          message: 'Metrics updated successfully',
+          data: {
+            titulo_canal,
+            visualizações,
+            inscritos,
+            videos,
+          },
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     } catch (externalError) {
       console.error('Error calling external API:', externalError?.message || externalError);
       return new Response(
@@ -108,12 +127,6 @@ export default async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Retorna uma resposta de sucesso
-    return new Response(
-      JSON.stringify({ message: 'Metrics initialized successfully and external API called' }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     console.error('Error processing request:', error?.message || error);
     return new Response(
