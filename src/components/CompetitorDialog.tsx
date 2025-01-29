@@ -27,18 +27,21 @@ export const CompetitorDialog = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const notifyYoutubeWebhook = async (youtube_id: string) => {
+  const notifyWebhook = async (youtube_id: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('youtube-metrics', {
-        body: { youtube_id }
+      const response = await fetch('https://n8n-production-ff75.up.railway.app/webhook/concorrente-youtube', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ youtube_id }),
       });
 
-      if (error) {
-        console.error('Error notifying webhook:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to notify webhook');
       }
 
-      return data;
+      return await response.json();
     } catch (error) {
       console.error('Error notifying webhook:', error);
       throw error;
@@ -61,7 +64,7 @@ export const CompetitorDialog = () => {
       if (error) throw error;
 
       if (competitor.youtube_id) {
-        await notifyYoutubeWebhook(competitor.youtube_id);
+        await notifyWebhook(competitor.youtube_id);
       }
 
       toast({
