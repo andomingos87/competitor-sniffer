@@ -11,19 +11,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface CompetitorFormData {
   name: string;
-  website?: string;
-  youtube_id?: string;
-  instagram?: string;
-  facebook?: string;
+  youtube_id: string;
 }
 
 export const CompetitorDialog = () => {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<CompetitorFormData>();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -48,9 +47,14 @@ export const CompetitorDialog = () => {
 
   const onSubmit = async (data: CompetitorFormData) => {
     try {
+      setIsLoading(true);
+      
       const { data: competitor, error } = await supabase
         .from('competitors')
-        .insert([data])
+        .insert([{
+          name: data.name,
+          youtube_id: data.youtube_id
+        }])
         .select()
         .single();
 
@@ -75,6 +79,8 @@ export const CompetitorDialog = () => {
         description: "Erro ao adicionar concorrente",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -94,38 +100,16 @@ export const CompetitorDialog = () => {
               id="name"
               {...register("name", { required: true })}
               placeholder="Nome do concorrente"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              {...register("website")}
-              placeholder="https://exemplo.com"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="youtube_id">ID do Canal do YouTube</Label>
             <Input
               id="youtube_id"
-              {...register("youtube_id")}
+              {...register("youtube_id", { required: true })}
               placeholder="ID do canal"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="instagram">Instagram</Label>
-            <Input
-              id="instagram"
-              {...register("instagram")}
-              placeholder="@usuario"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="facebook">Facebook</Label>
-            <Input
-              id="facebook"
-              {...register("facebook")}
-              placeholder="@usuario"
+              disabled={isLoading}
             />
           </div>
           <div className="flex justify-end space-x-2">
@@ -133,10 +117,20 @@ export const CompetitorDialog = () => {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={isLoading}
             >
               Cancelar
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adicionando...
+                </>
+              ) : (
+                'Salvar'
+              )}
+            </Button>
           </div>
         </form>
       </DialogContent>
