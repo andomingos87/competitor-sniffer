@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Competitor } from "@/types/competitor";
 
 // Dados mockados para exemplo
@@ -38,34 +39,76 @@ const mockCompetitors: Competitor[] = [
   },
 ];
 
+const CompetitorCard = ({ competitor, onClick }: { competitor: Competitor; onClick: () => void }) => (
+  <Card className="cursor-pointer hover:bg-gray-50" onClick={onClick}>
+    <CardHeader>
+      <CardTitle className="text-lg">{competitor.name}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-2">
+        <p className="text-sm text-gray-500">{competitor.website}</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm font-medium">Posts</p>
+            <p className="text-lg">{competitor.metrics.posts}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Engajamento</p>
+            <p className="text-lg">{competitor.metrics.engagement}%</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Seguidores</p>
+            <p className="text-lg">{competitor.metrics.followers.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Última Atualização</p>
+            <p className="text-lg">{competitor.metrics.lastUpdated}</p>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 const Competitors = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleCompetitorClick = (id: string) => {
     navigate(`/competitors/${id}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Concorrentes</h1>
-            <p className="text-gray-500 mt-2">
-              Monitore e analise seus principais concorrentes
-            </p>
-          </div>
-          <Button className="gap-2">
-            <Users className="h-4 w-4" />
-            Adicionar Concorrente
-          </Button>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Concorrentes</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-2">
+            Monitore e analise seus principais concorrentes
+          </p>
         </div>
+        <Button className="gap-2 w-full sm:w-auto">
+          <Users className="h-4 w-4" />
+          Adicionar Concorrente
+        </Button>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Concorrentes</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Concorrentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isMobile ? (
+            <div className="grid gap-4">
+              {mockCompetitors.map((competitor) => (
+                <CompetitorCard
+                  key={competitor.id}
+                  competitor={competitor}
+                  onClick={() => handleCompetitorClick(competitor.id)}
+                />
+              ))}
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -102,9 +145,9 @@ const Competitors = () => {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
