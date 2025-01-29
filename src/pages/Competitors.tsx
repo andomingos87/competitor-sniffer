@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { ArrowRight, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +36,7 @@ const CompetitorCard = ({
     <CardHeader className="flex flex-row items-center gap-4">
       <Checkbox 
         checked={isSelected}
-        onCheckedChange={onSelect}
+        onCheckedChange={(checked) => onSelect(checked === true)}
         onClick={(e) => e.stopPropagation()}
       />
       <CardTitle 
@@ -207,7 +208,7 @@ const Competitors = () => {
                   <TableHead className="w-[50px]">
                     <Checkbox
                       checked={selectedIds.length === competitors?.length}
-                      onCheckedChange={handleSelectAll}
+                      onCheckedChange={(checked) => handleSelectAll(checked === true)}
                     />
                   </TableHead>
                   <TableHead className="text-primary-900">Nome</TableHead>
@@ -228,7 +229,7 @@ const Competitors = () => {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedIds.includes(competitor.id)}
-                        onCheckedChange={(checked) => handleSelect(competitor.id, checked)}
+                        onCheckedChange={(checked) => handleSelect(competitor.id, checked === true)}
                       />
                     </TableCell>
                     <TableCell 
